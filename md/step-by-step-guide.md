@@ -388,17 +388,20 @@ docker-compose logs -f
 # Stop services
 docker-compose down
 ```
-
+docker tag myapp-postgres:v1.0.0 satriav/myapp-postgres:v1.0.0
+docker push satriav/myapp-postgres:v1.0.0
 ---
 
 ## STAGE 3: Setup Kubernetes Cluster Locally (Day 5)
 
 ### 3.1: Start Kubernetes Cluster
 
+docker login -u satriav
+
 ```bash
 # Option A: Using Minikube (recommended)
-minikube start --memory=8192 --cpus=4 --disk-size=50g
-
+#old minikube start --memory=8192 --cpus=4 --disk-size=50g
+minikube start --driver=docker --memory=3072 --cpus=2 --disk-size=30g
 # Option B: Using kubeadm (if already installed)
 sudo kubeadm init --pod-network-cidr=10.244.0.0/16
 
@@ -427,6 +430,7 @@ kubectl get namespaces
 
 ```yaml
 # k8s/configmap.yaml
+cat > ~/myapp/k8s/configmap.yaml << 'EOF'
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -437,7 +441,8 @@ data:
   DATABASE_PORT: "5432"
   DATABASE_NAME: "myapp_db"
   NODE_ENV: "production"
-  NEXT_PUBLIC_API_URL: "http://backend:8080/api"
+  NEXT_PUBLIC_API_URL: "http://backend:8080/api"  
+EOF
 ```
 
 ### 3.4: Create Secret for sensitive data
@@ -475,6 +480,7 @@ kubectl apply -f k8s/secret.yaml
 
 ```yaml
 # k8s/postgresql.yaml
+cat > ~/myapp/k8s/postgresql.yaml << 'EOF'
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -576,6 +582,7 @@ spec:
   - port: 5432
     targetPort: 5432
   type: ClusterIP
+EOF
 ```
 
 ### 4.2: NestJS Backend Deployment
@@ -819,6 +826,7 @@ kubectl exec -it deployment/backend -n myapp -- curl http://backend:8080/health
 
 ```bash
 # Add Helm repos
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
@@ -834,10 +842,64 @@ helm install prometheus prometheus-community/kube-prometheus-stack \
   --namespace monitoring \
   --set prometheus.prometheusSpec.retention=15d
 
-# Access Grafana
+#kube-prometheus-stack has been installed. Check its status by running:
+  kubectl --namespace monitoring get pods -l "release=prometheus"
+
+#Get Grafana 'admin' user password by running:
+
+  kubectl --namespace monitoring get secrets prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d ; echo
+[PASSWORD] zspOOIYa2CcXLbSmc3FAHeYwVuCb1dCfkTnrF7Kc
+
+#Access Grafana local instance:
+
+  export POD_NAME=$(kubectl --namespace monitoring get pod -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=prometheus" -oname)
+  kubectl --namespace monitoring port-forward $POD_NAME 3000
+
+#troubleshoot grafana
+#cek
+kubectl get pods -n monitoring
+
+kubectl describe pod prometheus-grafana-bcfcdcb9d-mbz4r -n monitoring
+
+kubectl logs prometheus-grafana-bcfcdcb9d-mbz4r -n monitoring -c grafana --previous
+
+kubectl get configmap -n monitoring
+
+kubectl get configmap prometheus-kube-prometheus-grafana-datasource -n monitoring -o yaml
+
+kubectl get configmap -n monitoring -o yaml | grep -B 10 -A 20 "isDefault"
+
+kubectl edit configmap loki-loki-stack -n monitoring
+#Restart Grafana Pod
+kubectl delete pod -n monitoring -l app.kubernetes.io/name=grafana
+
+#
+kubectl get pods -n monitoring -w
+#
+
+#Get your grafana admin user password by running:
+
+  kubectl get secret --namespace monitoring -l app.kubernetes.io/component=admin-secret -o jsonpath="{.items[0].data.admin-password}" | base64 --decode ; echo
+
+
+# login grafana
 kubectl port-forward svc/loki-grafana -n monitoring 3000:80 &
 # URL: http://localhost:3000
 # Default: admin/admin123
+Connections -> Data Sources
+
+Prometheus -> Up
+
+#kalau loki ga jalan di grafana
+kubectl get svc -n monitoring | grep loki
+
+#grafana ga bisa ngambil data
+kubectl edit configmap prometheus-kube-prometheus-grafana-datasource -n monitoring
+
+kubectl rollout restart deployment prometheus-grafana -n monitoring
+
+kubectl port-forward svc/prometheus-grafana 3000:80 -n monitoring
+
 ```
 
 ### 6.2: Install ArgoCD for GitOps
@@ -864,6 +926,7 @@ mkdir ~/my-k8s-config
 cd ~/my-k8s-config
 git init
 
+git remote add origin https://github.com/satriavilly/fullstack-app-dummy-k8s-config.git
 # Copy your k8s manifests
 cp -r ~/myapp/k8s .
 
@@ -895,7 +958,11 @@ git commit -m "K8s configs for ArgoCD"
 # Apply ArgoCD app
 kubectl apply -f argocd-app.yaml
 ```
-
+git remote add origin https://github.com/satriavilly/fullstack-app-dummy-k8s-config.git
+git add .
+git commit -m "Initial Kubernetes manifests"
+git branch -M main
+git push origin main
 ---
 
 ## STAGE 7: GitHub & Docker Hub Integration (Week 4)

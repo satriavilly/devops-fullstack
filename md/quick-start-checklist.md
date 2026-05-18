@@ -52,8 +52,33 @@
 
 ## WEEK 2 Checklist: Kubernetes Setup
 
+sudo dnf update -y
+sudo dnf install -y curl wget conntrack
+sudo dnf install -y dnf-plugins-core
+
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo systemctl enable --now docker
+sudo systemctl status docker
+sudo usermod -aG docker $USER
+
+newgrp docker
+docker ps
+
+exit
+
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+kubectl version --client
+
 ### Day 1: Cluster Setup
 - [ ] Start Minikube: `minikube start --memory=8192 --cpus=4 --disk-size=50g`
+set ram: minikube start --driver=docker --memory=3072 --cpus=2 --disk-size=30g
 - [ ] Verify: `kubectl cluster-info`
 - [ ] Create namespaces: `kubectl create namespace myapp`
 - [ ] Create namespaces: `kubectl create namespace monitoring`

@@ -5,7 +5,11 @@
       "Bash(npm install:*)",
       "Bash(npm run:*)",
       "Bash(docker info:*)",
-      "Bash(docker build:*)"
+      "Bash(docker build:*)",
+      "Bash(gh api *)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(New-Item *)"
     ]
   }
 }
