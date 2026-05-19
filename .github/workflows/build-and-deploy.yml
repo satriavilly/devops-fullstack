@@ -63,26 +63,36 @@ jobs:
 
     - name: Notify Telegram (success)
       if: success()
+      env:
+        COMMIT_MSG: ${{ github.event.head_commit.message }}
       run: |
+        CLEAN_COMMIT=$(printf '%s' "$COMMIT_MSG" | head -1 | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+        TEXT=$(printf '%s\n%s\n%s\n%s\n%s\n%s' \
+          "✅ <b>Build &amp; Deploy Berhasil</b>" \
+          "Repo: <code>${{ github.repository }}</code>" \
+          "Branch: <code>${{ github.ref_name }}</code>" \
+          "Commit: <code>${{ steps.vars.outputs.TAG }}</code> — ${CLEAN_COMMIT}" \
+          "Actor: ${{ github.actor }}" \
+          "<a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">Lihat workflow</a>")
         curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d parse_mode="Markdown" \
-          -d text="✅ *Build & Deploy Berhasil*
-        Repo: \`${{ github.repository }}\`
-        Branch: \`${{ github.ref_name }}\`
-        Commit: \`${{ steps.vars.outputs.TAG }}\` — ${{ github.event.head_commit.message }}
-        Actor: ${{ github.actor }}
-        [Lihat workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          -d parse_mode="HTML" \
+          --data-urlencode "text=${TEXT}"
 
     - name: Notify Telegram (failure)
       if: failure()
+      env:
+        COMMIT_MSG: ${{ github.event.head_commit.message }}
       run: |
+        CLEAN_COMMIT=$(printf '%s' "$COMMIT_MSG" | head -1 | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g')
+        TEXT=$(printf '%s\n%s\n%s\n%s\n%s\n%s' \
+          "❌ <b>Build &amp; Deploy GAGAL</b>" \
+          "Repo: <code>${{ github.repository }}</code>" \
+          "Branch: <code>${{ github.ref_name }}</code>" \
+          "Commit: <code>${{ steps.vars.outputs.TAG }}</code> — ${CLEAN_COMMIT}" \
+          "Actor: ${{ github.actor }}" \
+          "<a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">Lihat workflow</a>")
         curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
           -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-          -d parse_mode="Markdown" \
-          -d text="❌ *Build & Deploy GAGAL*
-        Repo: \`${{ github.repository }}\`
-        Branch: \`${{ github.ref_name }}\`
-        Commit: \`${{ steps.vars.outputs.TAG }}\` — ${{ github.event.head_commit.message }}
-        Actor: ${{ github.actor }}
-        [Lihat workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          -d parse_mode="HTML" \
+          --data-urlencode "text=${TEXT}"
