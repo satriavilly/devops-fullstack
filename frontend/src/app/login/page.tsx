@@ -35,7 +35,7 @@ export default function LoginPage() {
             MyApp
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-4">Selamat Datang</h1>
-          <p className="text-gray-500 mt-1">Masuk ke akun Anda</p>
+          <p className="text-gray-500 mt-1">Gunakan SSO</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
