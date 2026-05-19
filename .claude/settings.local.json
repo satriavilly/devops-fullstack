@@ -16,7 +16,8 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git submodule *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }
