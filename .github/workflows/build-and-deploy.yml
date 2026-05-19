@@ -9,10 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code (with submodules)
+    - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        submodules: true
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -54,11 +52,11 @@ jobs:
         git clone https://x-access-token:${{ secrets.CONFIG_REPO_TOKEN }}@github.com/satriavilly/fullstack-app-dummy-k8s-config.git
         cd fullstack-app-dummy-k8s-config
 
-        sed -i "s|satriav/myapp-backend:.*|satriav/myapp-backend:${{ steps.vars.outputs.TAG }}|" backend.yaml
-        sed -i "s|satriav/myapp-frontend:.*|satriav/myapp-frontend:${{ steps.vars.outputs.TAG }}|" frontend.yaml
+        find . -name "*.yaml" -o -name "*.yml" | xargs grep -l "myapp-backend" | xargs sed -i "s|satriav/myapp-backend:.*|satriav/myapp-backend:${{ steps.vars.outputs.TAG }}|"
+        find . -name "*.yaml" -o -name "*.yml" | xargs grep -l "myapp-frontend" | xargs sed -i "s|satriav/myapp-frontend:.*|satriav/myapp-frontend:${{ steps.vars.outputs.TAG }}|"
 
         git config user.email "github-actions@github.com"
         git config user.name "GitHub Actions"
-        git add backend.yaml frontend.yaml
+        git add -A
         git commit -m "ci: update image tags to ${{ steps.vars.outputs.TAG }}"
         git push
