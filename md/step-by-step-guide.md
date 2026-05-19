@@ -1147,6 +1147,16 @@ EOF
 
   # 3. Apply ArgoCD Application
   kubectl apply -f argocd/application.yaml
+
+  #
+  curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+  sudo install -m 555 argocd /usr/local/bin/argocd
+  rm argocd
+
+  #Trigger Sync Manual
+  kubectl patch application fullstack-app -n argocd --type merge -p '{"operation":{"initiatedBy":{"username":"admin"},"sync":{"syncStrategy":{"hook":{}}}}}'
+
+  
 ```
 ---
 
