@@ -1045,7 +1045,109 @@ git push -u origin main
 
 # GitHub Actions will automatically build and push images
 ```
+```bash
+# Telegram
+# Create application.yaml
+cat > application.yaml << 'EOF'
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fullstack-app
+  namespace: argocd
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.telegram: "199643258"
+    notifications.argoproj.io/subscribe.on-sync-failed.telegram: "199643258"
+    notifications.argoproj.io/subscribe.on-degraded.telegram: "199643258"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/satriavilly/fullstack-app-dummy-k8s-config.git
+    targetRevision: HEAD
+    path: .
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+EOF
 
+# Create argocd-notifications-cm.yaml
+cat > argocd-notifications-cm.yaml << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  service.telegram: |
+    token: $telegram-token
+
+  template.app-deployed: |
+    message: |
+      ✅ *ArgoCD: Deploy Berhasil*
+      App: `{{.app.metadata.name}}`
+      Status: `{{.app.status.sync.status}}`
+      Health: `{{.app.status.health.status}}`
+      Revision: `{{.app.status.sync.revision | substr 0 7}}`
+      {{if .app.status.operationState.syncResult.source.repoURL}}Repo: {{.app.status.operationState.syncResult.source.repoURL}}{{end}}
+
+  template.app-sync-failed: |
+    message: |
+      ❌ *ArgoCD: Sync GAGAL*
+      App: `{{.app.metadata.name}}`
+      Status: `{{.app.status.sync.status}}`
+      Error: {{.app.status.conditions | toJson}}
+
+  template.app-degraded: |
+    message: |
+      ⚠️ *ArgoCD: App Degraded*
+      App: `{{.app.metadata.name}}`
+      Health: `{{.app.status.health.status}}`
+      Message: {{.app.status.health.message}}
+
+  trigger.on-deployed: |
+    - when: app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'
+      send: [app-deployed]
+
+  trigger.on-sync-failed: |
+    - when: app.status.operationState.phase in ['Error', 'Failed']
+      send: [app-sync-failed]
+
+  trigger.on-degraded: |
+    - when: app.status.health.status == 'Degraded'
+      send: [app-degraded]
+
+  defaultTriggers: |
+    - on-deployed
+    - on-sync-failed
+    - on-degraded
+EOF
+
+# Create argocd-notifications-secret.yaml
+cat > argocd-notifications-secret.yaml << 'EOF'
+apiVersion: v1
+kind: Secret
+metadata:
+  name: argocd-notifications-secret
+  namespace: argocd
+type: Opaque
+stringData:
+  telegram-token: 8656909780:AAGN8zMsnlS20u89-Wv1b5x2s8R1T63LdGg
+EOF
+
+  # 1. Apply secret (langsung ke cluster, JANGAN di-commit)
+  kubectl apply -f argocd/argocd-notifications-secret.yaml
+
+  # 2. Apply configmap notifikasi
+  kubectl apply -f argocd/argocd-notifications-cm.yaml
+
+  # 3. Apply ArgoCD Application
+  kubectl apply -f argocd/application.yaml
+```
 ---
 
 ## Complete File Structure

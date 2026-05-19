@@ -60,3 +60,29 @@ jobs:
         git add -A
         git commit -m "ci: update image tags to ${{ steps.vars.outputs.TAG }}"
         git push
+
+    - name: Notify Telegram (success)
+      if: success()
+      run: |
+        curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d parse_mode="Markdown" \
+          -d text="✅ *Build & Deploy Berhasil*
+        Repo: \`${{ github.repository }}\`
+        Branch: \`${{ github.ref_name }}\`
+        Commit: \`${{ steps.vars.outputs.TAG }}\` — ${{ github.event.head_commit.message }}
+        Actor: ${{ github.actor }}
+        [Lihat workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+
+    - name: Notify Telegram (failure)
+      if: failure()
+      run: |
+        curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+          -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+          -d parse_mode="Markdown" \
+          -d text="❌ *Build & Deploy GAGAL*
+        Repo: \`${{ github.repository }}\`
+        Branch: \`${{ github.ref_name }}\`
+        Commit: \`${{ steps.vars.outputs.TAG }}\` — ${{ github.event.head_commit.message }}
+        Actor: ${{ github.actor }}
+        [Lihat workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
