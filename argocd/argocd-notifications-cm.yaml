@@ -4,31 +4,32 @@ metadata:
   name: argocd-notifications-cm
   namespace: argocd
 data:
-  service.telegram: |
-    token: $telegram-token
+  service.webhook.tg: |
+    url: https://api.telegram.org/bot$telegram-token/sendMessage
+    headers:
+      - name: Content-Type
+        value: application/json
 
   template.app-deployed: |
-    message: |
-      ✅ *ArgoCD: Deploy Berhasil*
-      App: `{{.app.metadata.name}}`
-      Status: `{{.app.status.sync.status}}`
-      Health: `{{.app.status.health.status}}`
-      Revision: `{{.app.status.sync.revision | substr 0 7}}`
-      {{if .app.status.operationState.syncResult.source.repoURL}}Repo: {{.app.status.operationState.syncResult.source.repoURL}}{{end}}
+    webhook:
+      tg:
+        method: POST
+        body: |
+          {"chat_id": 199643258, "parse_mode": "HTML", "text": "✅ <b>ArgoCD: Deploy Berhasil</b>\nApp: <code>{{.app.metadata.name}}</code>\nStatus: <code>{{.app.status.sync.status}}</code>\nHealth: <code>{{.app.status.health.status}}</code>"}
 
   template.app-sync-failed: |
-    message: |
-      ❌ *ArgoCD: Sync GAGAL*
-      App: `{{.app.metadata.name}}`
-      Status: `{{.app.status.sync.status}}`
-      Error: {{.app.status.conditions | toJson}}
+    webhook:
+      tg:
+        method: POST
+        body: |
+          {"chat_id": 199643258, "parse_mode": "HTML", "text": "❌ <b>ArgoCD: Sync GAGAL</b>\nApp: <code>{{.app.metadata.name}}</code>\nStatus: <code>{{.app.status.sync.status}}</code>"}
 
   template.app-degraded: |
-    message: |
-      ⚠️ *ArgoCD: App Degraded*
-      App: `{{.app.metadata.name}}`
-      Health: `{{.app.status.health.status}}`
-      Message: {{.app.status.health.message}}
+    webhook:
+      tg:
+        method: POST
+        body: |
+          {"chat_id": 199643258, "parse_mode": "HTML", "text": "⚠️ <b>ArgoCD: App Degraded</b>\nApp: <code>{{.app.metadata.name}}</code>\nHealth: <code>{{.app.status.health.status}}</code>"}
 
   trigger.on-deployed: |
     - when: app.status.operationState != nil && app.status.operationState.phase in ['Succeeded'] and app.status.health.status == 'Healthy'

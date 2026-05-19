@@ -4,9 +4,9 @@ metadata:
   name: fullstack-app
   namespace: argocd
   annotations:
-    notifications.argoproj.io/subscribe.on-deployed.telegram: "199643258"
-    notifications.argoproj.io/subscribe.on-sync-failed.telegram: "199643258"
-    notifications.argoproj.io/subscribe.on-degraded.telegram: "199643258"
+    notifications.argoproj.io/subscribe.on-deployed.tg: ""
+    notifications.argoproj.io/subscribe.on-sync-failed.tg: ""
+    notifications.argoproj.io/subscribe.on-degraded.tg: ""
 spec:
   project: default
   source:
