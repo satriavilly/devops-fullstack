@@ -17,7 +17,17 @@
       "Bash(git commit *)",
       "Bash(git submodule *)",
       "Bash(curl *)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(psql *)",
+      "PowerShell(Get-Service *)",
+      "PowerShell($env:PGPASSWORD = \"admin\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\14\\\\bin\\\\psql.exe\" -U postgres -c \"\\\\l\" 2>&1)",
+      "PowerShell($env:PGPASSWORD = \"admin\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\14\\\\bin\\\\psql.exe\" -U postgres -d devops -c \"\\\\dt\" 2>&1)",
+      "Bash(npm run *)",
+      "Bash(echo \"Backend PID: $!\")",
+      "Bash(echo \"Frontend PID: $!\")",
+      "PowerShell(node -e \"require\\('playwright'\\)\" 2>&1; echo \"exit: $LASTEXITCODE\")",
+      "PowerShell(Invoke-RestMethod -Uri \"http://localhost:3001/auth/register\" -Method Post -ContentType \"application/json\" -Body '{\"name\":\"Test User\",\"email\":\"test@test.com\",\"password\":\"test123\"}' 2>&1 | ConvertTo-Json -Depth 3)",
+      "PowerShell(Invoke-RestMethod -Uri \"http://localhost:3001/api/auth/register\" -Method Post -ContentType \"application/json\" -Body '{\"name\":\"Test User\",\"email\":\"test@test.com\",\"password\":\"test123\"}' 2>&1)"
     ]
   }
 }
